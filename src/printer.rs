@@ -327,6 +327,10 @@ impl<'a> Printer for InteractivePrinter<'a> {
                 StyleComponent::HeaderFilesize,
                 self.config.style_components.header_filesize(),
             ),
+            (
+                StyleComponent::HeaderFiletype,
+                self.config.style_components.header_filetype(),
+            ),
         ]
         .iter()
         .filter(|(_, is_enabled)| *is_enabled)
@@ -342,13 +346,13 @@ impl<'a> Printer for InteractivePrinter<'a> {
                 writeln!(handle)?;
             }
         }
+        self.print_header_component_indent(handle)?;
+        let mut file_info_handle = Vec::new();
 
         header_components.iter().try_for_each(|component| {
-            self.print_header_component_indent(handle)?;
-
             match component {
-                StyleComponent::HeaderFilename => writeln!(
-                    handle,
+                StyleComponent::HeaderFilename => write!(
+                    file_info_handle,
                     "{}{}{}",
                     description
                         .kind()
@@ -363,11 +367,23 @@ impl<'a> Printer for InteractivePrinter<'a> {
                         .size
                         .map(|s| format!("{}", ByteSize(s)))
                         .unwrap_or_else(|| "-".into());
-                    writeln!(handle, "Size: {}", self.colors.header_value.paint(bsize))
+                    write!(file_info_handle, " | Size: {}", self.colors.header_value.paint(bsize))
                 }
+                StyleComponent::HeaderFiletype => {
+                    let file_to_analyze = &input.description.name;
+                    let ft = mime_guess::from_path(file_to_analyze);
+                    Ok(if ft.is_empty() {
+                        write!(file_info_handle, " | File Type: {}", self.colors.header_value.paint("Unknown"))?;
+                    } else {
+                        write!(file_info_handle, " | File Type: {}", self.colors.header_value.paint(ft.first().unwrap().as_ref()))?;
+                    })
+                }
+
                 _ => Ok(()),
             }
         })?;
+
+        writeln!(handle, "{}", String::from_utf8(file_info_handle).unwrap())?;
 
         if self.config.style_components.grid() {
             if self.content_type.map_or(false, |c| c.is_text()) || self.config.show_nonprintable {

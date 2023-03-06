@@ -14,6 +14,7 @@ pub enum StyleComponent {
     Header,
     HeaderFilename,
     HeaderFilesize,
+    HeaderFiletype,
     LineNumbers,
     Snip,
     Full,
@@ -38,6 +39,7 @@ impl StyleComponent {
             StyleComponent::Header => &[StyleComponent::HeaderFilename],
             StyleComponent::HeaderFilename => &[StyleComponent::HeaderFilename],
             StyleComponent::HeaderFilesize => &[StyleComponent::HeaderFilesize],
+            StyleComponent::HeaderFiletype => &[StyleComponent::HeaderFiletype],
             StyleComponent::LineNumbers => &[StyleComponent::LineNumbers],
             StyleComponent::Snip => &[StyleComponent::Snip],
             StyleComponent::Full => &[
@@ -75,6 +77,7 @@ impl FromStr for StyleComponent {
             "header" => Ok(StyleComponent::Header),
             "header-filename" => Ok(StyleComponent::HeaderFilename),
             "header-filesize" => Ok(StyleComponent::HeaderFilesize),
+            "header-filetype" => Ok(StyleComponent::HeaderFiletype),
             "numbers" => Ok(StyleComponent::LineNumbers),
             "snip" => Ok(StyleComponent::Snip),
             "full" => Ok(StyleComponent::Full),
@@ -107,7 +110,7 @@ impl StyleComponents {
     }
 
     pub fn header(&self) -> bool {
-        self.header_filename() || self.header_filesize()
+        self.header_filename() || self.header_filesize() || self.header_filetype()
     }
 
     pub fn header_filename(&self) -> bool {
@@ -116,6 +119,10 @@ impl StyleComponents {
 
     pub fn header_filesize(&self) -> bool {
         self.0.contains(&StyleComponent::HeaderFilesize)
+    }
+
+    pub fn header_filetype(&self) -> bool {
+        self.0.contains(&StyleComponent::HeaderFiletype)
     }
 
     pub fn numbers(&self) -> bool {
